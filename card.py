@@ -51,18 +51,18 @@ class Card:
     @number.setter
     def number(self, number):
         number = number.capitalize()
-        if number in ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']:
+        if number in ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King']:
             self._number = number
         else:
             print('Invalid number')
         
-        if self.number in ['A']:
+        if self.number in ['Ace']:
             self._value = 14
-        elif self.number in ['J']:
+        elif self.number in ['Jack']:
             self._value = 11
-        elif self.number in ['Q']:
+        elif self.number in ['Queen']:
             self._value = 12
-        elif self.number in ['K']:
+        elif self.number in ['King']:
             self._value = 13
         else:
             self._value = int(self.number)
@@ -87,7 +87,7 @@ class Deck:
         
     def populate(self):
         suits = ['Clubs', 'Diamonds', 'Hearts', 'Spades']
-        numbers = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+        numbers = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King']
         self._cards = [Card(n, s) for s in suits for n in numbers]
     
     def shuffle(self):
