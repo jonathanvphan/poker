@@ -21,6 +21,7 @@ class Poker:
             self._game_deck.shuffle()
             self.play_round()
             self.check_balances()
+        self.end_game()
     
     def play_round(self):
         self.in_play = [True for check in range(self.players)]
@@ -59,22 +60,24 @@ class Poker:
             if len(self.winning_player) > 1:
                 winning_player_string = ', '.join([str(player) for player in self.winning_player])
                 print('Winning Hand: Players ' + winning_player_string)
+                self.update_player_action_text('Winning Hand: Players ' + winning_player_string)
                 for payout in self.winning_player:
                     self.wallet[payout-1] += self.jackpot/len(self.winning_player)
             else:
                 print('Winning Hand: Player ' + str(self.winning_player[0]))
+                self.update_player_action_text('Winning Hand: Player ' + str(self.winning_player[0]))
                 self.wallet[self.winning_player[0]-1] += self.jackpot
         else:
             print('No player left in play')
         for players in range(self.players):
             self.show_hole_cards(players)
             self.show_hand_text(players)
+        self.update_balances_text()
         self.win.getMouse()
         for players in range(self.players):
             self.hide_hole_cards(players)
             self.hide_hand_text(players)
         self.hide_community_cards()
-        self.update_balances_text()
     
     def give_money(self):
         self.wallet = []
@@ -85,7 +88,6 @@ class Poker:
         balances = [money for money in self.wallet]
         max_balance = max(balances)
         balances.remove(max_balance)
-        print(balances)
         overall_balances = [True for players in balances if players > 0]
         self.players_with_cash = any(overall_balances)
 
@@ -103,6 +105,7 @@ class Poker:
                 while valid == False and self.in_play[player_turn] == True and bet_raised[player_turn] == False:
                     print('Player ' + str(player_turn+1) + ': $' + str(self.wallet[player_turn]))
                     self.show_hole_cards(player_turn)
+                    self.update_current_bet_text()
                     #decision = input('Player ' + str(player_turn+1) + ': check, call, raise, or fold? ')
                     decision = self.get_input()
                     if decision == 'check':
@@ -112,8 +115,9 @@ class Poker:
                             valid = True
                         else:
                             print('Cannot check with current bet of $' + str(self.current_bet))
+                            self.update_player_action_text('Cannot check with current bet of $' + str(self.current_bet))
                     elif decision == 'call':
-                        if self.current_bet < self.wallet[player_turn]:
+                        if self.current_bet <= self.wallet[player_turn]:
                             if self.players_current_bet[player_turn] < self.current_bet:
                                 self.call_bet(player_turn)
                                 bet_raised[player_turn] = True
@@ -123,11 +127,13 @@ class Poker:
                                     bet_raised[bet_raiser] = True
                             elif self.players_current_bet[player_turn] == self.current_bet:
                                 print('You cannot call your own bet of $' + str(self.current_bet))
+                                self.update_player_action_text('You cannot call your own bet of $' + str(self.current_bet))
                         else:
                             print('Insufficent funds')
+                            self.update_player_action_text('Insufficent funds')
                     elif decision == 'raise':
                         amount = int(input('Bet amount?: $'))
-                        if amount < self.wallet[player_turn]:
+                        if amount <= self.wallet[player_turn]:
                             if amount > self.current_bet:
                                 self.raise_bet(player_turn, amount)
                                 bet_raised = [False for bets in range(self.players)]
@@ -135,8 +141,10 @@ class Poker:
                                 valid = True
                             else:
                                 print('Raise must be greater than current bet of $' + str(self.current_bet))
+                                self.update_player_action_text('Raise must be greater than current bet of $' + str(self.current_bet))
                         else:
                             print('Insufficient funds')
+                            self.update_player_action_text('Insufficent funds')
                     elif decision == 'fold':
                         self.fold(player_turn)
                         bet_raised[player_turn] = True
@@ -150,9 +158,11 @@ class Poker:
 
     def check(self, player):
         print('Player ' + str(player+1) + ' checked')
+        self.update_player_action_text('Player ' + str(player+1) + ' checked')
 
     def raise_bet(self, player, amount):
         print('Player ' + str(player+1) + ' raised bet from $' + str(self.current_bet) + ' to $' + str(amount))
+        self.update_player_action_text('Player ' + str(player+1) + ' raised bet from $' + str(self.current_bet) + ' to $' + str(amount))
         self.players_current_bet[player] = amount
         self.wallet[player] -= amount
         self.current_bet = amount
@@ -160,6 +170,7 @@ class Poker:
 
     def call_bet(self, player):
         print('Player ' + str(player+1) + ' called bet of $' + str(self.current_bet))
+        self.update_player_action_text('Player ' + str(player+1) + ' called bet of $' + str(self.current_bet))
         self.wallet[player] += self.players_current_bet[player]
         self.players_current_bet[player] = self.current_bet
         self.wallet[player] -= self.current_bet
@@ -167,6 +178,7 @@ class Poker:
 
     def fold(self, player):
         print('Player ' + str(player+1) + ' folded')
+        self.update_player_action_text('Player ' + str(player+1) + ' folded')
         self.in_play[player] = False
         
     def hole_cards(self):
@@ -415,6 +427,16 @@ class Poker:
         self.jackpot_text.setTextColor('red')
         self.jackpot_text.draw(self.win)
 
+        self.current_bet_text = Text(Point(200, 400), 'Current bet: $0')
+        self.current_bet_text.setSize(20)
+        self.current_bet_text.setTextColor('red')
+        self.current_bet_text.draw(self.win)
+
+        self.player_action_text = Text(Point(1000, 350), '')
+        self.player_action_text.setSize(20)
+        self.player_action_text.setTextColor('red')
+        self.player_action_text.draw(self.win)
+
         for players in range(self.players):
             self.balances_text[players] = Text(Point(((self.win.getWidth()/self.players)/self.players)*((players+(1/self.players))*self.players), 100), 'Player ' + str(players+1) + ' Balance: $' + str(self.wallet[players]))
             self.balances_text[players].setTextColor('red')
@@ -472,12 +494,26 @@ class Poker:
             self.balances_text[players].setSize(20)
             self.balances_text[players].draw(self.win)
 
+    def update_current_bet_text(self):
+        self.current_bet_text.undraw()
+        self.current_bet_text = Text(Point(200, 400), 'Current bet: $' + str(self.current_bet))
+        self.current_bet_text.setSize(20)
+        self.current_bet_text.setTextColor('red')
+        self.current_bet_text.draw(self.win)
+
     def update_jackpot_text(self):
         self.jackpot_text.undraw()
         self.jackpot_text = Text(Point(200, 350), 'Current pot: $' + str(self.jackpot))
         self.jackpot_text.setSize(20)
         self.jackpot_text.setTextColor('red')
         self.jackpot_text.draw(self.win)
+
+    def update_player_action_text(self, action):
+        self.player_action_text.undraw()
+        self.player_action_text = Text(Point(1000, 350), action)
+        self.player_action_text.setSize(20)
+        self.player_action_text.setTextColor('red')
+        self.player_action_text.draw(self.win)
 
     def get_input(self):
         decision = ''
@@ -492,6 +528,16 @@ class Poker:
             elif input.getX() >= 850 and input.getX() <= 950:
                 decision = 'fold'
         return decision
+
+    def end_game(self):
+        winning_player = 0
+        for players, money in enumerate(self.wallet):
+            if money > self.wallet[winning_player]:
+                winning_player = players
+        self.player_action_text = Text(Point(700, 350), 'Player ' + str(winning_player) + ' wins it all' )
+        self.player_action_text.setSize(36)
+        self.player_action_text.setTextColor('blue')
+        self.player_action_text.draw(self.win)
 
 count = 0
 while True:

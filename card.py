@@ -96,7 +96,3 @@ class Deck:
     
     def shuffle(self):
         random.shuffle(self._cards)
-
-deck = Deck()
-deck.shuffle
-print(deck.cards[0].image_file)
