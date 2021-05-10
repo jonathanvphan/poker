@@ -71,6 +71,10 @@ class Card:
     def value(self):
         return self._value
 
+    @property
+    def image_file(self):
+        return str(self._value) + self._suit + '.ppm'
+
 class Deck:
     
     def __init__(self):
@@ -92,3 +96,7 @@ class Deck:
     
     def shuffle(self):
         random.shuffle(self._cards)
+
+deck = Deck()
+deck.shuffle
+print(deck.cards[0].image_file)
