@@ -106,7 +106,7 @@ class Poker:
         if self.exit_loop == 1:
             self.win.getMouse()
         # pause
-        #self.win.getMouse()
+        self.win.getMouse()
         # hide all the hole cards of every player
         for players in range(self.players):
             self.hide_hole_cards(players)
@@ -155,7 +155,8 @@ class Poker:
                     self.update_current_bet_text()
                     #decision = input('Player ' + str(player_turn+1) + ': check, call, raise, or fold? ')
                     # gets the input of clicking the graphic
-                    decision = 'check'#self.get_input()
+                    decision = self.get_input()
+                    #decision = 'check'
                     if decision == 'check':
                         # if the current bet of the player before is equal to the current bet of the current player then set everything to true to move on to the next player
                         if self.players_current_bet[player_turn-1] == self.players_current_bet[player_turn]:
@@ -422,7 +423,6 @@ class Poker:
                     second_max_value = third_max_value
                     self.exit_loop = 1
                 self.hand_values[player] = [7, max_value[0], second_max_value[0]]
-                print(self.hand_values[player])
             elif max_value_counter[3] > 0 and max_value_counter[2] > 0:
                 self.hand_value_string[player] = 'Full House, ' + str(max_value_converted) + 's over ' + str(second_max_value_converted) + 's'
                 self.hand_values[player] = [6, max_value[0], second_max_value[0]]            
@@ -440,7 +440,6 @@ class Poker:
                 if third_max_value[0] < fourth_max_value[0]:
                     third_max_value = fourth_max_value
                 self.hand_values[player] = [2, max_value[0], second_max_value[0], third_max_value[0]]
-                print(self.hand_values[player])
             elif max_value_counter[2] > 0:
                 self.hand_value_string[player] = 'One Pair, ' + str(max_value_converted) + 's'
                 self.hand_values[player] = [1, max_value[0], second_max_value[0], third_max_value[0], fourth_max_value[0]]
@@ -479,11 +478,12 @@ class Poker:
 
     def compare_hand(self):
         # sets the highest hand to -1 and winning player to -1, if -1 means no one won
-        self.highest_hand = [-1]
+        self.highest_hand = self.hand_values[0]
         self.winning_player = [-1]
         self.kicker = ''
         # compares every hand value to the next, updating the winning player list if it's higher or adds to the list if they are equal
         for index, hands in enumerate(self.hand_values):
+            print(hands)
             # checks if the player is in play still
             if self.in_play[index] == True:
                 # checks first what kind of hand
@@ -532,18 +532,29 @@ class Poker:
                                                     # in case of ties
                                                     elif hands[5] == self.highest_hand[5]:
                                                         self.winning_player.append(index+1)
+                                                    else:
+                                                        self.kicker = self.convert_face(self.highest_hand[5])
                                                 # in case of ties
                                                 else:
                                                     self.winning_player.append(index+1)
+                                            else:
+                                                self.kicker = self.convert_face(self.highest_hand[4])
                                         # in case of ties
                                         else:
                                             self.winning_player.append(index+1)
+                                    else:
+                                        self.kicker = self.convert_face(self.highest_hand[3])
                                 # in case of ties
                                 else:
                                     self.winning_player.append(index+1)
+                            else:
+                                self.kicker = self.convert_face(self.highest_hand[2])
+                                if hands[0] in [2, 6]:
+                                    self.kicker = ''
                         # in case of ties
                         else:
                             self.winning_player.append(index+1)
+            print(self.kicker)
 
     def initial_graphics(self):
         self.balances_text = [None for players in range(self.players)]
@@ -555,45 +566,45 @@ class Poker:
         self.win = GraphWin('Poker', GetSystemMetrics(0)-100, GetSystemMetrics(1)-100)
         self.win.setBackground('green')
 
-        check_rectangle = Rectangle(Point(350, self.win.getHeight()-175), Point(250, self.win.getHeight()-125))
+        check_rectangle = Rectangle(Point((self.win.getWidth()/2)-450, self.win.getHeight()-175), Point((self.win.getWidth()/2)-350, self.win.getHeight()-125))
         check_rectangle.setFill('blue')
         check_rectangle.draw(self.win)
-        check_text = Text(Point(300, self.win.getHeight()-150), 'Check')
+        check_text = Text(Point((self.win.getWidth()/2)-400, self.win.getHeight()-150), 'Check')
         check_text.setSize(20)
         check_text.draw(self.win)
 
-        call_rectangle = Rectangle(Point(550, self.win.getHeight()-175), Point(450, self.win.getHeight()-125))
+        call_rectangle = Rectangle(Point((self.win.getWidth()/2)-250, self.win.getHeight()-175), Point((self.win.getWidth()/2)-150, self.win.getHeight()-125))
         call_rectangle.setFill('yellow')
         call_rectangle.draw(self.win)
-        call_text = Text(Point(500, self.win.getHeight()-150), 'Call')
+        call_text = Text(Point((self.win.getWidth()/2)-200, self.win.getHeight()-150), 'Call')
         call_text.setSize(20)
         call_text.draw(self.win)
         
-        raise_rectangle = Rectangle(Point(750, self.win.getHeight()-175), Point(650, self.win.getHeight()-125))
+        raise_rectangle = Rectangle(Point((self.win.getWidth()/2)+50, self.win.getHeight()-175), Point((self.win.getWidth()/2)-50, self.win.getHeight()-125))
         raise_rectangle.setFill('purple')
         raise_rectangle.draw(self.win)
-        raise_text = Text(Point(700, self.win.getHeight()-150), 'Raise')
+        raise_text = Text(Point((self.win.getWidth()/2), self.win.getHeight()-150), 'Raise')
         raise_text.setSize(20)
         raise_text.draw(self.win)
 
-        fold_rectangle = Rectangle(Point(950, self.win.getHeight()-175), Point(850, self.win.getHeight()-125))
+        fold_rectangle = Rectangle(Point((self.win.getWidth()/2)+250, self.win.getHeight()-175), Point((self.win.getWidth()/2)+150, self.win.getHeight()-125))
         fold_rectangle.setFill('red')
         fold_rectangle.draw(self.win)
-        fold_text = Text(Point(900, self.win.getHeight()-150), 'Fold')
+        fold_text = Text(Point((self.win.getWidth()/2)+200, self.win.getHeight()-150), 'Fold')
         fold_text.setSize(20)
         fold_text.draw(self.win)
 
-        show_cards_rectangle = Rectangle(Point(1250, self.win.getHeight()-175), Point(1050, self.win.getHeight()-125))
+        show_cards_rectangle = Rectangle(Point((self.win.getWidth()/2)+550, self.win.getHeight()-175), Point((self.win.getWidth()/2)+350, self.win.getHeight()-125))
         show_cards_rectangle.setFill('orange')
         show_cards_rectangle.draw(self.win)
-        show_cards_text = Text(Point(1150, self.win.getHeight()-150), 'Show Cards')
+        show_cards_text = Text(Point((self.win.getWidth()/2)+450, self.win.getHeight()-150), 'Show Cards')
         show_cards_text.setSize(20)
         show_cards_text.draw(self.win)
 
-        allin_rectangle = Rectangle(Point(750, self.win.getHeight()-75), Point(650, self.win.getHeight()-25))
+        allin_rectangle = Rectangle(Point((self.win.getWidth()/2)+50, self.win.getHeight()-75), Point((self.win.getWidth()/2)-50, self.win.getHeight()-25))
         allin_rectangle.setFill('purple')
         allin_rectangle.draw(self.win)
-        allin_text = Text(Point(700, self.win.getHeight()-50), 'All In')
+        allin_text = Text(Point(self.win.getWidth()/2, self.win.getHeight()-50), 'All In')
         allin_text.setSize(20)
         allin_text.draw(self.win)
 
@@ -615,16 +626,16 @@ class Poker:
         self.player_action_text.draw(self.win)
 
         for players in range(self.players):
-            self.balances_text[players] = Text(Point(((self.win.getWidth()/self.players)/self.players)*((players+(1/self.players))*self.players), self.win.getHeight()-100), 'Player ' + str(players+1) + ' Balance: $' + str(self.wallet[players]))
+            self.balances_text[players] = Text(Point((self.win.getWidth()/(self.players+1)*(players+1)), self.win.getHeight()-250), 'Player ' + str(players+1) + ' Balance: $' + str(self.wallet[players]))
             self.balances_text[players].setTextColor('red')
             self.balances_text[players].setSize(20)
             self.balances_text[players].draw(self.win)
 
     def show_hole_cards(self, player):
         self.showing_cards = True
-        self.hole_card_1[player] = Image(Point(((self.win.getWidth()/self.players)/self.players)*((player+(1/self.players))*self.players)-50, 150), self.player_hands[player][0].image_file)
+        self.hole_card_1[player] = Image(Point((self.win.getWidth()/(self.players+1)*(player+1))-25, 150), self.player_hands[player][0].image_file)
         self.hole_card_1[player].draw(self.win)
-        self.hole_card_2[player] = Image(Point(((self.win.getWidth()/self.players)/self.players)*((player+(1/self.players))*self.players), 150), self.player_hands[player][1].image_file)
+        self.hole_card_2[player] = Image(Point((self.win.getWidth()/(self.players+1)*(player+1))+25, 150), self.player_hands[player][1].image_file)
         self.hole_card_2[player].draw(self.win)
 
     def hide_hole_cards(self, player):
@@ -633,9 +644,9 @@ class Poker:
         self.hole_card_2[player].undraw()
 
     def show_back_cards(self, player):
-        self.back_card_1[player] = Image(Point(((self.win.getWidth()/self.players)/self.players)*((player+(1/self.players))*self.players)-50, 150), 'backCard.ppm')
+        self.back_card_1[player] = Image(Point((self.win.getWidth()/(self.players+1)*(player+1))-25, 150), 'backCard.ppm')
         self.back_card_1[player].draw(self.win)
-        self.back_card_2[player] = Image(Point(((self.win.getWidth()/self.players)/self.players)*((player+(1/self.players))*self.players), 150), 'backCard.ppm')
+        self.back_card_2[player] = Image(Point((self.win.getWidth()/(self.players+1)*(player+1))+25, 150), 'backCard.ppm')
         self.back_card_2[player].draw(self.win)
 
     def hide_back_cards(self, player):
@@ -643,19 +654,19 @@ class Poker:
         self.back_card_2[player].undraw()
 
     def show_the_flop(self):
-        self.community_card_1 = Image(Point(550, self.win.getHeight()-300), self.community_cards[0].image_file)
-        self.community_card_2 = Image(Point(600, self.win.getHeight()-300), self.community_cards[1].image_file)
-        self.community_card_3 = Image(Point(650, self.win.getHeight()-300), self.community_cards[2].image_file)
+        self.community_card_1 = Image(Point(self.win.getWidth()/2-100, self.win.getHeight()/2), self.community_cards[0].image_file)
+        self.community_card_2 = Image(Point((self.win.getWidth()/2)-50, self.win.getHeight()/2), self.community_cards[1].image_file)
+        self.community_card_3 = Image(Point((self.win.getWidth()/2), self.win.getHeight()/2), self.community_cards[2].image_file)
         self.community_card_1.draw(self.win)
         self.community_card_2.draw(self.win)
         self.community_card_3.draw(self.win)
 
     def show_the_turn(self):
-        self.community_card_4 = Image(Point(700, self.win.getHeight()-300), self.community_cards[3].image_file)
+        self.community_card_4 = Image(Point((self.win.getWidth()/2)+50, self.win.getHeight()/2), self.community_cards[3].image_file)
         self.community_card_4.draw(self.win)
         
     def show_the_river(self):
-        self.community_card_5 = Image(Point(750, self.win.getHeight()-300), self.community_cards[4].image_file)
+        self.community_card_5 = Image(Point((self.win.getWidth()/2)+100, self.win.getHeight()/2), self.community_cards[4].image_file)
         self.community_card_5.draw(self.win)
 
     def hide_community_cards(self):
@@ -666,11 +677,11 @@ class Poker:
         self.community_card_5.undraw()
 
     def show_hand_text(self, player):
-        self.hand_text[player] = Text(Point(((self.win.getWidth()/self.players)/self.players)*((player+(1/self.players))*self.players)-50, 30), self.hand_value_string[player])
+        self.hand_text[player] = Text(Point((self.win.getWidth()/(self.players+1)*(player+1)), 30), self.hand_value_string[player])
         for players in self.winning_player:
             if (players-1) == player:
                 if self.kicker != '':
-                    self.hand_text[player] = Text(Point(((self.win.getWidth()/self.players)/self.players)*((player+(1/self.players))*self.players)-50, 30), self.hand_value_string[player] + ' with ' + str(self.kicker) + ' kicker')
+                    self.hand_text[player] = Text(Point((self.win.getWidth()/(self.players+1)*(player+1)), 30), self.hand_value_string[player] + ' with ' + str(self.kicker) + ' kicker')
                 self.hand_text[player].setTextColor('red')
         self.hand_text[player].draw(self.win)
 
@@ -680,28 +691,28 @@ class Poker:
     def update_balances_text(self):
         for players in range(self.players):
             self.balances_text[players].undraw()
-            self.balances_text[players] = Text(Point(((self.win.getWidth()/self.players)/self.players)*((players+(1/self.players))*self.players), self.win.getHeight()-100), 'Player ' + str(players+1) + ' Balance: $' + str(self.wallet[players]))
+            self.balances_text[players] = Text(Point((self.win.getWidth()/(self.players+1)*(players+1)), self.win.getHeight()-250), 'Player ' + str(players+1) + ' Balance: $' + str(self.wallet[players]))
             self.balances_text[players].setTextColor('red')
             self.balances_text[players].setSize(20)
             self.balances_text[players].draw(self.win)
 
     def update_current_bet_text(self):
         self.current_bet_text.undraw()
-        self.current_bet_text = Text(Point(200, self.win.getHeight()-400), 'Current bet: $' + str(self.current_bet))
+        self.current_bet_text = Text(Point(200, self.win.getHeight()/2), 'Current bet: $' + str(self.current_bet))
         self.current_bet_text.setSize(20)
         self.current_bet_text.setTextColor('red')
         self.current_bet_text.draw(self.win)
 
     def update_jackpot_text(self):
         self.jackpot_text.undraw()
-        self.jackpot_text = Text(Point(200, self.win.getHeight()-350), 'Current pot: $' + str(self.jackpot))
+        self.jackpot_text = Text(Point(200, (self.win.getHeight()/2)-50), 'Current pot: $' + str(self.jackpot))
         self.jackpot_text.setSize(20)
         self.jackpot_text.setTextColor('red')
         self.jackpot_text.draw(self.win)
 
     def update_player_action_text(self, action):
         self.player_action_text.undraw()
-        self.player_action_text = Text(Point(1000, self.win.getHeight()-350), action)
+        self.player_action_text = Text(Point(self.win.getWidth()-300, self.win.getHeight()/2), action)
         self.player_action_text.setSize(20)
         self.player_action_text.setTextColor('red')
         self.player_action_text.draw(self.win)
@@ -710,18 +721,18 @@ class Poker:
         decision = ''
         input = self.win.getMouse()
         if input.getY() >= (self.win.getHeight()-175) and input.getY() <= (self.win.getHeight()-125):
-            if input.getX() >= 250 and input.getX() <= 350:
+            if input.getX() >= ((self.win.getWidth()/2)-450) and input.getX() <= ((self.win.getWidth()/2)-350):
                 decision = 'check'
-            elif input.getX() >= 450 and input.getX() <= 550:
+            elif input.getX() >= ((self.win.getWidth()/2)-250) and input.getX() <= ((self.win.getWidth()/2)-150):
                 decision = 'call'
-            elif input.getX() >= 650 and input.getX() <= 750:
+            elif input.getX() >= ((self.win.getWidth()/2)-50) and input.getX() <= ((self.win.getWidth()/2)+50):
                 decision = 'raise'
-            elif input.getX() >= 850 and input.getX() <= 950:
+            elif input.getX() >= ((self.win.getWidth()/2)+150) and input.getX() <= ((self.win.getWidth()/2)+250):
                 decision = 'fold'
-            elif input.getX() >= 1050 and input.getX() <= 1250:
+            elif input.getX() >= ((self.win.getWidth()/2)+350) and input.getX() <= ((self.win.getWidth()/2)+550):
                 decision = 'show cards'
         elif input.getY() >= (self.win.getHeight()-75) and input.getY() <= (self.win.getHeight()-25):
-            if input.getX() >= 650 and input.getX() <= 750:
+            if input.getX() >= ((self.win.getWidth()/2)-50) and input.getX() <= ((self.win.getWidth()/2)+50):
                 decision = 'all in'
         return decision
 
@@ -730,9 +741,18 @@ class Poker:
         current_key = ''
         while current_key != 'Return':
             current_key = self.win.getKey()        
-            if current_key != 'Return':
+            if current_key == 'BackSpace':
+                string_list = list(amount)
+                print(string_list)
+                del(string_list[len(string_list)-1])
+                print(string_list)
+                amount = ''.join(string_list)
+                self.update_player_action_text('Bet amount?: $' + amount)
+            elif current_key != 'Return':
                 amount += current_key
                 self.update_player_action_text('Bet amount?: $' + amount)
+        if amount == '':
+            amount = '0'
         return amount
 
     def end_game(self):
@@ -740,7 +760,7 @@ class Poker:
         for players, money in enumerate(self.wallet):
             if money > self.wallet[winning_player]:
                 winning_player = players
-        self.player_action_text = Text(Point(700, self.win.getHeight()-350), 'Player ' + str(winning_player+1) + ' wins it all' )
+        self.player_action_text = Text(Point(self.win.getWidth()/2, self.win.getHeight()/2), 'Player ' + str(winning_player+1) + ' wins it all' )
         self.player_action_text.setSize(36)
         self.player_action_text.setTextColor('blue')
         self.player_action_text.draw(self.win)
