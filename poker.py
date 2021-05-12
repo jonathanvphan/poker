@@ -156,7 +156,7 @@ class Poker:
                     #decision = input('Player ' + str(player_turn+1) + ': check, call, raise, or fold? ')
                     # gets the input of clicking the graphic
                     decision = self.get_input()
-                    #decision = 'check'
+                    #decision = 'check' # used to speedily move through hands for testing purposes
                     if decision == 'check':
                         # if the current bet of the player before is equal to the current bet of the current player then set everything to true to move on to the next player
                         if self.players_current_bet[player_turn-1] == self.players_current_bet[player_turn]:
@@ -191,12 +191,15 @@ class Poker:
                         # asks for bet amount
                         self.update_player_action_text('Bet amount?: $')
                         # amount = int(input('Bet amount?: $'))
-                        amount = int(self.get_keyboard())
+                        try:
+                            amount = int(self.get_keyboard())
+                        except:
+                            amount = 0
                         # if the player has enough money in their balance to raise to that amount
                         if amount <= self.wallet[player_turn]:
                             # if the amount is greater than the current bet of the table then raise the bet
                             if amount > self.current_bet:
-                                self.raise_bet(player_turn, amount)
+                                self.raise_bet(player_turn, amount, 0)
                                 bet_raised = [False for bets in range(self.players)]
                                 bet_raiser = player_turn
                                 valid = True
@@ -214,8 +217,8 @@ class Poker:
                         # if the player has enough money in their balance to raise to that amount
                         if amount <= self.wallet[player_turn]:
                             # if the amount is greater than the current bet of the table then raise the bet
-                            if amount > self.current_bet:
-                                self.raise_bet(player_turn, amount)
+                            if amount >= self.current_bet:
+                                self.raise_bet(player_turn, amount, 1)
                                 bet_raised = [False for bets in range(self.players)]
                                 bet_raiser = player_turn
                                 valid = True
@@ -257,10 +260,18 @@ class Poker:
         print('Player ' + str(player+1) + ' checked')
         self.update_player_action_text('Player ' + str(player+1) + ' checked')
 
-    def raise_bet(self, player, amount):
+    def raise_bet(self, player, amount, all_in):
         # displays that the player raised
-        print('Player ' + str(player+1) + ' raised bet from $' + str(self.current_bet) + ' to $' + str(amount))
-        self.update_player_action_text('Player ' + str(player+1) + ' raised bet from $' + str(self.current_bet) + ' to $' + str(amount))
+        if all_in == 0:
+            print('Player ' + str(player+1) + ' raised bet from $' + str(self.current_bet) + ' to $' + str(amount))
+            self.update_player_action_text('Player ' + str(player+1) + ' raised bet from $' + str(self.current_bet) + ' to $' + str(amount))
+        if all_in == 1:
+            print('Player ' + str(player+1) + ' is all in with $' + str(amount))
+            self.update_player_action_text('Player ' + str(player+1) + ' is all in with $' + str(amount))
+        # adds back the player's last bet back to their balance
+        self.wallet[player] += self.players_current_bet[player]
+        # removes the previous bet from the jackpot
+        self.jackpot -= self.players_current_bet[player]
         # sets the player's current bet to the amount
         self.players_current_bet[player] = amount
         # subtracts the amount from the wallet
@@ -276,6 +287,8 @@ class Poker:
         self.update_player_action_text('Player ' + str(player+1) + ' called bet of $' + str(self.current_bet))
         # adds back the player's last bet back to their balance
         self.wallet[player] += self.players_current_bet[player]
+        # removes the previous bet from the jackpot
+        self.jackpot -= self.players_current_bet[player]
         # changes the current player's bet to match the current bet of the table
         self.players_current_bet[player] = self.current_bet
         # subtracts the current bet of the table from the wallet
@@ -478,9 +491,10 @@ class Poker:
 
     def compare_hand(self):
         # sets the highest hand to -1 and winning player to -1, if -1 means no one won
-        self.highest_hand = self.hand_values[0]
+        self.highest_hand = [-1]
         self.winning_player = [-1]
         self.kicker = ''
+        self.kicker_value = 0
         # compares every hand value to the next, updating the winning player list if it's higher or adds to the list if they are equal
         for index, hands in enumerate(self.hand_values):
             print(hands)
@@ -490,12 +504,14 @@ class Poker:
                 if hands[0] > self.highest_hand[0]:
                     self.highest_hand = hands
                     self.kicker = ''
+                    self.kicker_value = 0
                     self.winning_player = [index+1]
                 # checks the high card of the hand
                 elif hands[0] == self.highest_hand[0]:
                     if hands[1] > self.highest_hand[1]:
                         self.highest_hand = hands
                         self.kicker = ''
+                        self.kicker_value = 1
                         self.winning_player = [index+1]
                     # checks the second high card of the hand for full house and two pair
                     elif hands[1] == self.highest_hand[1]:
@@ -504,6 +520,7 @@ class Poker:
                             if hands[2] > self.highest_hand[2]:
                                 self.highest_hand = hands
                                 self.kicker = self.convert_face(hands[2])
+                                self.kicker_value = 2
                                 if hands[0] in [2, 6]:
                                     self.kicker = ''
                                 self.winning_player = [index+1]
@@ -514,6 +531,7 @@ class Poker:
                                     if hands[3] > self.highest_hand[3]:
                                         self.highest_hand = hands
                                         self.kicker = self.convert_face(hands[3])
+                                        self.kicker_value = 3
                                         self.winning_player = [index+1]
                                     elif hands[3] == self.highest_hand[3]:
                                         # if high card, pair or flush, continue to fourth card tiebreaker
@@ -521,6 +539,7 @@ class Poker:
                                             if hands[4] > self.highest_hand[4]:
                                                 self.highest_hand = hands
                                                 self.kicker = self.convert_face(hands[4])
+                                                self.kicker_value = 4
                                                 self.winning_player = [index+1]
                                             elif hands[4] == self.highest_hand[4]:
                                                 # if high card or flush, continue to fifth card tiebreaker
@@ -528,29 +547,39 @@ class Poker:
                                                     if hands[5] > self.highest_hand[5]:
                                                         self.highest_hand = hands
                                                         self.kicker = self.convert_face(hands[5])
+                                                        self.kicker_value = 5
                                                         self.winning_player = [index+1]
                                                     # in case of ties
                                                     elif hands[5] == self.highest_hand[5]:
                                                         self.winning_player.append(index+1)
                                                     else:
-                                                        self.kicker = self.convert_face(self.highest_hand[5])
+                                                        if self.kicker_value <= 4:
+                                                            self.kicker = self.convert_face(self.highest_hand[5])
+                                                            self.kicker_value = 5
                                                 # in case of ties
                                                 else:
                                                     self.winning_player.append(index+1)
                                             else:
-                                                self.kicker = self.convert_face(self.highest_hand[4])
+                                                if self.kicker_value <= 3:
+                                                    self.kicker = self.convert_face(self.highest_hand[4])
+                                                    self.kicker_value = 4
                                         # in case of ties
                                         else:
                                             self.winning_player.append(index+1)
                                     else:
-                                        self.kicker = self.convert_face(self.highest_hand[3])
+                                        if self.kicker_value <= 2:
+                                            self.kicker = self.convert_face(self.highest_hand[3])
+                                            self.kicker_value = 3
                                 # in case of ties
                                 else:
                                     self.winning_player.append(index+1)
                             else:
-                                self.kicker = self.convert_face(self.highest_hand[2])
-                                if hands[0] in [2, 6]:
-                                    self.kicker = ''
+                                if self.kicker_value <= 1:
+                                    self.kicker = self.convert_face(self.highest_hand[2])
+                                    self.kicker_value = 2
+                                    if hands[0] in [2, 6]:
+                                        self.kicker = ''
+                                        self.kicker_value = 0
                         # in case of ties
                         else:
                             self.winning_player.append(index+1)
@@ -564,17 +593,17 @@ class Poker:
         self.back_card_2 = [None for players in range(self.players)]
         self.hand_text = ['' for players in range(self.players)]
         self.win = GraphWin('Poker', GetSystemMetrics(0)-100, GetSystemMetrics(1)-100)
-        self.win.setBackground('green')
+        self.win.setBackground('dark green')
 
         check_rectangle = Rectangle(Point((self.win.getWidth()/2)-450, self.win.getHeight()-175), Point((self.win.getWidth()/2)-350, self.win.getHeight()-125))
-        check_rectangle.setFill('blue')
+        check_rectangle.setFill('dodger blue')
         check_rectangle.draw(self.win)
         check_text = Text(Point((self.win.getWidth()/2)-400, self.win.getHeight()-150), 'Check')
         check_text.setSize(20)
         check_text.draw(self.win)
 
         call_rectangle = Rectangle(Point((self.win.getWidth()/2)-250, self.win.getHeight()-175), Point((self.win.getWidth()/2)-150, self.win.getHeight()-125))
-        call_rectangle.setFill('yellow')
+        call_rectangle.setFill('maroon')
         call_rectangle.draw(self.win)
         call_text = Text(Point((self.win.getWidth()/2)-200, self.win.getHeight()-150), 'Call')
         call_text.setSize(20)
@@ -595,14 +624,14 @@ class Poker:
         fold_text.draw(self.win)
 
         show_cards_rectangle = Rectangle(Point((self.win.getWidth()/2)+550, self.win.getHeight()-175), Point((self.win.getWidth()/2)+350, self.win.getHeight()-125))
-        show_cards_rectangle.setFill('orange')
+        show_cards_rectangle.setFill('turquoise')
         show_cards_rectangle.draw(self.win)
         show_cards_text = Text(Point((self.win.getWidth()/2)+450, self.win.getHeight()-150), 'Show Cards')
         show_cards_text.setSize(20)
         show_cards_text.draw(self.win)
 
         allin_rectangle = Rectangle(Point((self.win.getWidth()/2)+50, self.win.getHeight()-75), Point((self.win.getWidth()/2)-50, self.win.getHeight()-25))
-        allin_rectangle.setFill('purple')
+        allin_rectangle.setFill('gold')
         allin_rectangle.draw(self.win)
         allin_text = Text(Point(self.win.getWidth()/2, self.win.getHeight()-50), 'All In')
         allin_text.setSize(20)
@@ -767,10 +796,7 @@ class Poker:
         self.win.getMouse()
         self.win.close()
 
-count = 0
 while True:
     game = Poker()
-    game.start_game(3)
+    game.start_game(2)
     print(game.combined_hand)
-    count += 1
-    print(count)
